@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenAssist 配置</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="../icons/icon48.png" alt="Logo" class="logo">
+      <h1>OpenAssist 配置中心</h1>
+    </header>
+    
+    <main>
+      <section class="card">
+        <h2>API 密钥设置</h2>
+        <p class="description">请填入您的 API Key。这些信息将仅保存在您的浏览器本地，不会上传到任何其他服务器。</p>
+        
+        <div class="form-group">
+          <label for="deepseek-key">DeepSeek API Key</label>
+          <input type="password" id="deepseek-key" placeholder="sk-...">
+          <small>用于调用 DeepSeek-Chat 模型</small>
+        </div>
+
+        <div class="form-group">
+          <label for="openai-key">OpenAI API Key</label>
+          <input type="password" id="openai-key" placeholder="sk-...">
+          <small>用于调用 GPT-4o 模型</small>
+        </div>
+
+        <div class="actions">
+          <button id="save-btn" class="primary-btn">保存配置</button>
+          <span id="status" class="status-msg"></span>
+        </div>
+      </section>
+
+      <section class="card help">
+        <h2>如何获取 API Key？</h2>
+        <ul>
+          <li><strong>DeepSeek</strong>: 访问 <a href="https://platform.deepseek.com/" target="_blank">DeepSeek 开放平台</a></li>
+          <li><strong>OpenAI</strong>: 访问 <a href="https://platform.openai.com/" target="_blank">OpenAI API 平台</a></li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

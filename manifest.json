@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "OpenAssist 助手",
+  "version": "1.0.0",
+  "description": "一个基于侧边栏的 AI 智能助手",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "sidePanel",
+    "contextMenus",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel/index.html"
+  },
+  "options_page": "options/index.html"
+}
