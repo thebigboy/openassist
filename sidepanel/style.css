@@ -270,3 +270,40 @@ textarea {
   padding: 1rem;
   margin: 0.75rem 0;
 }
+
+/* Loading indicator */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.loading-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  animation: dotPulse 1.4s infinite ease-in-out both;
+}
+
+.loading-dot:nth-child(1) { animation-delay: 0s; }
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; margin-right: 6px; }
+
+@keyframes dotPulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+/* Analysis time tag */
+.analysis-time {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+}

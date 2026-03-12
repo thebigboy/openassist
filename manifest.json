@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "OpenAssist 助手",
-  "version": "1.0.0",
+  "version": "7.0.0",
   "description": "一个基于侧边栏的 AI 智能助手",
   "icons": {
     "16": "icons/icon16.png",

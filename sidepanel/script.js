@@ -14,7 +14,8 @@ let currentImageBase64 = null;
 let config = {
   deepseekKey: '',
   openaiKey: '',
-  currentModel: 'deepseek'
+  currentModel: 'deepseek',
+  openaiModel: 'gpt-5-nano'
 };
 
 // 配置 marked
@@ -30,10 +31,11 @@ marked.setOptions({
 
 // 核心初始化函数
 async function init() {
-  const result = await chrome.storage.local.get(['deepseekKey', 'openaiKey', 'currentModel']);
+  const result = await chrome.storage.local.get(['deepseekKey', 'openaiKey', 'currentModel', 'openaiModel']);
   config.deepseekKey = result.deepseekKey || '';
   config.openaiKey = result.openaiKey || '';
   config.currentModel = result.currentModel || 'deepseek';
+  config.openaiModel = result.openaiModel || 'gpt-5-nano';
   modelSelect.value = config.currentModel;
   updateUIBasedOnConfig();
 }
@@ -59,6 +61,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     let changed = false;
     if (changes.deepseekKey) { config.deepseekKey = changes.deepseekKey.newValue || ''; changed = true; }
     if (changes.openaiKey) { config.openaiKey = changes.openaiKey.newValue || ''; changed = true; }
+    if (changes.openaiModel) { config.openaiModel = changes.openaiModel.newValue || 'gpt-5-nano'; changed = true; }
     if (changes.currentModel) {
       config.currentModel = changes.currentModel.newValue || 'deepseek';
       modelSelect.value = config.currentModel;
@@ -141,11 +144,19 @@ async function sendMessage() {
   imageInput.value = '';
   
   const aiMessageDiv = addMessage('', 'ai');
+  aiMessageDiv.innerHTML = '<div class="loading-indicator"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span> AI 分析中</div>';
   sendBtn.disabled = true;
+  chatContainer.scrollTop = chatContainer.scrollHeight;
 
+  const startTime = performance.now();
   let fullResponse = '';
+  let firstChunkReceived = false;
   try {
     await callLLMStreaming(prompt, imageData, config.currentModel, activeKey, (chunk) => {
+      if (!firstChunkReceived) {
+        firstChunkReceived = true;
+        aiMessageDiv.innerHTML = '';
+      }
       fullResponse += chunk;
       aiMessageDiv.innerHTML = marked.parse(fullResponse);
       aiMessageDiv.querySelectorAll('pre code').forEach((block) => {
@@ -153,7 +164,14 @@ async function sendMessage() {
       });
       chatContainer.scrollTop = chatContainer.scrollHeight;
     });
+    // 追加耗时信息
+    const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+    const timeTag = document.createElement('div');
+    timeTag.className = 'analysis-time';
+    timeTag.textContent = `分析耗时 ${elapsed}s`;
+    aiMessageDiv.appendChild(timeTag);
   } catch (error) {
+    aiMessageDiv.innerHTML = '';
     aiMessageDiv.textContent = '错误: ' + error.message;
   } finally {
     sendBtn.disabled = false;
@@ -190,7 +208,7 @@ async function callLLMStreaming(prompt, imageData, modelType, rawApiKey, onChunk
     ? 'https://api.deepseek.com/v1/chat/completions' 
     : 'https://api.openai.com/v1/chat/completions';
   
-  const modelName = modelType === 'deepseek' ? 'deepseek-chat' : 'gpt-4o';
+  const modelName = modelType === 'deepseek' ? 'deepseek-chat' : (config.openaiModel || 'gpt-5-nano');
   const messages = [];
   if (modelType === 'openai' && imageData) {
     const base64Data = imageData.split(',')[1];
