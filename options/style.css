@@ -125,3 +125,104 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* 自定义模型相关样式 */
+.hidden {
+  display: none !important;
+}
+
+.model-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.model-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.model-item-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.model-item-detail {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.model-item-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+}
+
+.icon-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.empty-state {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.custom-model-form {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 0.75rem;
+  background: #f9fafb;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.secondary-btn {
+  background-color: #e5e7eb;
+  color: #374151;
+  border: none;
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background-color: #d1d5db;
+}
+
+.add-model-btn {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.625rem;
+  border: 1px dashed #d1d5db;
+  border-radius: 0.5rem;
+  background: none;
+  color: #6b7280;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.add-model-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}

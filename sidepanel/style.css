@@ -261,6 +261,99 @@ textarea {
   transform: none;
 }
 
+/* Wiki Content Tag */
+#wiki-content-tag {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background-color: #f9fafb;
+  border-top: 1px solid var(--border);
+}
+
+.tag-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tag-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-main);
+  flex: 1;
+}
+
+#toggle-wiki-content,
+#remove-wiki-content {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+#toggle-wiki-content:hover,
+#remove-wiki-content:hover {
+  background-color: #e5e7eb;
+  color: var(--text-main);
+}
+
+.tag-body {
+  max-height: 120px;
+  overflow: hidden;
+  margin-top: 0.4rem;
+  padding: 0.5rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-main);
+  transition: max-height 0.3s ease;
+}
+
+.tag-body.expanded {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tag-body h1, .tag-body h2, .tag-body h3,
+.tag-body h4, .tag-body h5, .tag-body h6 {
+  margin: 0.4rem 0 0.2rem;
+  font-size: 0.875rem;
+}
+
+.tag-body p {
+  margin: 0.25rem 0;
+}
+
+.tag-body ul, .tag-body ol {
+  padding-left: 1.2rem;
+  margin: 0.25rem 0;
+}
+
+.tag-body pre {
+  background-color: #f3f4f6;
+  padding: 0.4rem;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+  font-size: 0.75rem;
+}
+
+.tag-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.25rem 0;
+  font-size: 0.75rem;
+}
+
+.tag-body th, .tag-body td {
+  border: 1px solid var(--border);
+  padding: 0.2rem 0.4rem;
+}
+
 .hidden { display: none !important; }
 
 /* Markdown & Code styles remain the same but refined */

@@ -10,12 +10,19 @@ const previewArea = document.getElementById('preview-area');
 const imagePreview = document.getElementById('image-preview');
 const removeImageBtn = document.getElementById('remove-image');
 
+const wikiContentTag = document.getElementById('wiki-content-tag');
+const wikiContentBody = document.getElementById('wiki-content-body');
+const toggleWikiBtn = document.getElementById('toggle-wiki-content');
+const removeWikiBtn = document.getElementById('remove-wiki-content');
+
+let currentWikiMarkdown = null;
 let currentImageBase64 = null;
 let config = {
   deepseekKey: '',
   openaiKey: '',
   currentModel: 'deepseek',
-  openaiModel: 'gpt-5-nano'
+  openaiModel: 'gpt-5-nano',
+  customModels: []
 };
 
 // 配置 marked
@@ -31,18 +38,47 @@ marked.setOptions({
 
 // 核心初始化函数
 async function init() {
-  const result = await chrome.storage.local.get(['deepseekKey', 'openaiKey', 'currentModel', 'openaiModel']);
+  const result = await chrome.storage.local.get(['deepseekKey', 'openaiKey', 'currentModel', 'openaiModel', 'customModels']);
   config.deepseekKey = result.deepseekKey || '';
   config.openaiKey = result.openaiKey || '';
   config.currentModel = result.currentModel || 'deepseek';
   config.openaiModel = result.openaiModel || 'gpt-5-nano';
+  config.customModels = result.customModels || [];
+  refreshModelSelectOptions();
   modelSelect.value = config.currentModel;
   updateUIBasedOnConfig();
 }
 
+// 刷新模型下拉选项（保留内置 + 追加自定义）
+function refreshModelSelectOptions() {
+  // 移除旧的自定义选项
+  modelSelect.querySelectorAll('option[data-custom]').forEach((opt) => opt.remove());
+  // 追加自定义模型选项
+  config.customModels.forEach((m) => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.name;
+    opt.setAttribute('data-custom', 'true');
+    modelSelect.appendChild(opt);
+  });
+}
+
 // 根据配置更新 UI 状态
 function updateUIBasedOnConfig() {
-  const activeKey = config.currentModel === 'deepseek' ? config.deepseekKey : config.openaiKey;
+  let activeKey;
+  let displayName;
+  if (config.currentModel.startsWith('custom_')) {
+    const cm = config.customModels.find((m) => m.id === config.currentModel);
+    activeKey = cm ? cm.apiKey : '';
+    displayName = cm ? cm.name : config.currentModel;
+  } else if (config.currentModel === 'deepseek') {
+    activeKey = config.deepseekKey;
+    displayName = 'DeepSeek';
+  } else {
+    activeKey = config.openaiKey;
+    displayName = 'OpenAI';
+  }
+
   if (!activeKey) {
     initialMessage.innerHTML = '⚠️ 未检测到 API Key。正在为您打开配置页面...';
     initialMessage.style.color = '#ef4444';
@@ -50,7 +86,7 @@ function updateUIBasedOnConfig() {
       chrome.runtime.openOptionsPage();
     }, 1500);
   } else {
-    initialMessage.textContent = `你好！当前模型：${config.currentModel.toUpperCase()}。已就绪，请提问。`;
+    initialMessage.textContent = `你好！当前模型：${displayName}。已就绪，请提问。`;
     initialMessage.style.color = '';
   }
 }
@@ -62,6 +98,11 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     if (changes.deepseekKey) { config.deepseekKey = changes.deepseekKey.newValue || ''; changed = true; }
     if (changes.openaiKey) { config.openaiKey = changes.openaiKey.newValue || ''; changed = true; }
     if (changes.openaiModel) { config.openaiModel = changes.openaiModel.newValue || 'gpt-5-nano'; changed = true; }
+    if (changes.customModels) {
+      config.customModels = changes.customModels.newValue || [];
+      refreshModelSelectOptions();
+      changed = true;
+    }
     if (changes.currentModel) {
       config.currentModel = changes.currentModel.newValue || 'deepseek';
       modelSelect.value = config.currentModel;
@@ -91,6 +132,21 @@ removeImageBtn.addEventListener('click', () => {
   previewArea.classList.add('hidden');
 });
 
+// Wiki 内容标签：展开/收起
+toggleWikiBtn.addEventListener('click', () => {
+  const isExpanded = wikiContentBody.classList.toggle('expanded');
+  toggleWikiBtn.textContent = isExpanded ? '▲' : '▼';
+});
+
+// Wiki 内容标签：移除
+removeWikiBtn.addEventListener('click', () => {
+  currentWikiMarkdown = null;
+  wikiContentTag.classList.add('hidden');
+  wikiContentBody.innerHTML = '';
+  toggleWikiBtn.textContent = '▼';
+  wikiContentBody.classList.remove('expanded');
+});
+
 // 自动调整文本框高度
 userInput.addEventListener('input', () => {
   userInput.style.height = 'auto';
@@ -113,8 +169,14 @@ async function sendMessage() {
   const text = userInput.value.trim();
   if (!text && !currentImageBase64) return;
 
-  let activeKey = config.currentModel === 'deepseek' ? config.deepseekKey : config.openaiKey;
-  activeKey = activeKey.replace(/[^\x20-\x7E]/g, '').trim();
+  let activeKey;
+  if (config.currentModel.startsWith('custom_')) {
+    const cm = config.customModels.find((m) => m.id === config.currentModel);
+    activeKey = cm ? cm.apiKey : '';
+  } else {
+    activeKey = config.currentModel === 'deepseek' ? config.deepseekKey : config.openaiKey;
+  }
+  activeKey = (activeKey || '').replace(/[^\x20-\x7E]/g, '').trim();
 
   if (!activeKey) {
     alert('API Key 无效或未配置，请重新设置');
@@ -135,7 +197,10 @@ async function sendMessage() {
     userMsgDiv.appendChild(textSpan);
   }
 
-  const prompt = text;
+  let prompt = text;
+  if (currentWikiMarkdown) {
+    prompt = text + '\n\n---\n以下是需求文档内容：\n' + currentWikiMarkdown;
+  }
   const imageData = currentImageBase64;
   userInput.value = '';
   userInput.style.height = 'auto';
@@ -204,13 +269,23 @@ async function callLLMStreaming(prompt, imageData, modelType, rawApiKey, onChunk
     return handleStreamResponse(response, onChunk, true);
   }
 
-  const endpoint = modelType === 'deepseek' 
-    ? 'https://api.deepseek.com/v1/chat/completions' 
-    : 'https://api.openai.com/v1/chat/completions';
-  
-  const modelName = modelType === 'deepseek' ? 'deepseek-chat' : (config.openaiModel || 'gpt-5-nano');
+  let endpoint, modelName;
+
+  if (modelType.startsWith('custom_')) {
+    const cm = config.customModels.find((m) => m.id === modelType);
+    if (!cm) throw new Error('自定义模型配置未找到');
+    endpoint = cm.apiUrl;
+    modelName = cm.modelName;
+  } else if (modelType === 'deepseek') {
+    endpoint = 'https://api.deepseek.com/v1/chat/completions';
+    modelName = 'deepseek-chat';
+  } else {
+    endpoint = 'https://api.openai.com/v1/chat/completions';
+    modelName = config.openaiModel || 'gpt-5-nano';
+  }
+
   const messages = [];
-  if (modelType === 'openai' && imageData) {
+  if ((modelType === 'openai' || modelType.startsWith('custom_')) && imageData) {
     const base64Data = imageData.split(',')[1];
     messages.push({
       role: 'user',
@@ -232,6 +307,7 @@ async function callLLMStreaming(prompt, imageData, modelType, rawApiKey, onChunk
     body: JSON.stringify({
       model: modelName,
       messages: messages,
+      max_tokens:4096,
       stream: true
     })
   });
@@ -310,9 +386,42 @@ userInput.addEventListener('keydown', (e) => {
 
 init();
 
+// 处理需求分析消息
+function handleRequirementAnalysis(message) {
+  if (message.error || !message.html) {
+    addMessage(message.error || '未找到需求内容', 'system');
+    return;
+  }
+  const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+  currentWikiMarkdown = turndownService.turndown(message.html);
+
+  wikiContentBody.innerHTML = marked.parse(currentWikiMarkdown);
+  wikiContentBody.querySelectorAll('pre code').forEach((block) => {
+    hljs.highlightElement(block);
+  });
+  wikiContentTag.classList.remove('hidden');
+  wikiContentBody.classList.remove('expanded');
+  toggleWikiBtn.textContent = '▼';
+
+  userInput.value = '请对以下需求文档进行分析，包括：该网页是我的一份需求，是否存在逻辑性的错误或遗漏的地方。';
+  userInput.dispatchEvent(new Event('input'));
+}
+
 chrome.runtime.onMessage.addListener((message) => {
+  console.log('[OpenAssist] sidepanel 收到消息:', message.type);
   if (message.type === 'TEXT_SELECTED') {
     userInput.value = `请解释一下这段文字：\n"${message.text}"`;
     userInput.dispatchEvent(new Event('input'));
+  } else if (message.type === 'REQUIREMENT_ANALYSIS') {
+    handleRequirementAnalysis(message);
+  }
+});
+
+// 启动时检查 storage 中是否有待处理的需求分析数据（兜底机制）
+chrome.storage.local.get('pendingRequirement', (result) => {
+  if (result.pendingRequirement) {
+    console.log('[OpenAssist] 从 storage 读取到待处理需求数据');
+    handleRequirementAnalysis(result.pendingRequirement);
+    chrome.storage.local.remove('pendingRequirement');
   }
 });

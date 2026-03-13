@@ -40,6 +40,15 @@
       </div>
     </div>
 
+    <div id="wiki-content-tag" class="hidden">
+      <div class="tag-header">
+        <span class="tag-label">📄 需求内容</span>
+        <button id="toggle-wiki-content" title="展开/收起">▼</button>
+        <button id="remove-wiki-content" title="移除">&times;</button>
+      </div>
+      <div id="wiki-content-body" class="tag-body"></div>
+    </div>
+
     <footer>
       <div class="input-area">
         <label for="image-input" id="upload-label" title="上传图片">
@@ -56,6 +65,7 @@
   
   <script src="libs/marked.min.js"></script>
   <script src="libs/highlight.min.js"></script>
+  <script src="libs/turndown.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
